@@ -1,0 +1,19 @@
+meta {
+  name: Delete Link
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{host}}/api/link/{{id}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-API-Key: {{api_key}}
+}
+
+vars:pre-request {
+  id: 
+}

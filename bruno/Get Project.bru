@@ -1,0 +1,19 @@
+meta {
+  name: Get Project
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/project/{{id}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-API-Key: {{api_key}}
+}
+
+vars:pre-request {
+  id: 
+}

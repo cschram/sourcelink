@@ -1,0 +1,22 @@
+meta {
+  name: Create Link
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/api/links
+  body: json
+  auth: none
+}
+
+headers {
+  X-API-Key: {{api_key}}
+}
+
+body:json {
+  {
+    "url": "destination_url",
+    "project_id": "project_id"
+  }
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Get Link
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/api/link/{{id}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-API-Key: {{api_key}}
+}
+
+vars:pre-request {
+  id: 
+}

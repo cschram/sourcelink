@@ -1,0 +1,15 @@
+meta {
+  name: Link Redirect
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{host}}/{{id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: 
+}

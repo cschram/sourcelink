@@ -6,3 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.83"
+axum = "0.7.5"
+axum-macros = "0.4.1"
+dotenvy = "0.15.7"
+envy = "0.4.2"
+log = "0.4.21"
+nanoid = "0.4.0"
+serde = "1.0.201"
+sqlx = { version = "0.7.4", features = ["runtime-tokio", "sqlite", "macros"] }
+structured-logger = "1.0.3"
+thiserror = "1.0.60"
+tokio = { version = "1.37.0", features = ["full"] }
