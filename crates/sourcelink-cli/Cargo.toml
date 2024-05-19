@@ -5,6 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
+clap = "4.5.4"
+indoc = "2.0.5"
+lazy_static = "1.4.0"
 line-span = "0.1.5"
 log = "0.4.21"
+simple_logger = "5.0.0"
 thiserror = "1.0.61"

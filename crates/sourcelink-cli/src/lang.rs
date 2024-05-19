@@ -1,4 +1,4 @@
-use crate::error::SourcelinkError;
+use crate::{error::SourcelinkError, parser::*};
 use anyhow::Result;
 use std::{collections::HashMap, ffi::OsStr, path::Path};
 
@@ -38,11 +38,35 @@ lazy_static! {
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Lang {
-    CFamily, // Includes C and C++
+    /// .c, .h, .cpp, .hpp
+    CFamily,
+    /// .go
     Go,
-    JavaScript, // Includes TypeScript as well as React extensions.
+    /// .js, .jsx, .ts, .tsx
+    JavaScript,
+    /// .py
     Python,
+    /// .rs
     Rust,
+}
+
+impl Lang {
+    pub fn parsers(&self) -> Vec<Box<dyn Parser>> {
+        match self {
+            Lang::CFamily | Lang::Go | Lang::JavaScript => vec![
+                Box::new(SingleLineCommentParser::new("//")),
+                Box::new(BlockCommentParser::new("/*", "*/", false)),
+            ],
+            Lang::Python => vec![
+                Box::new(SingleLineCommentParser::new("#")),
+                Box::new(BlockCommentParser::new(r#"""""#, r#"""""#, false)),
+            ],
+            Lang::Rust => vec![
+                Box::new(SingleLineCommentParser::new("//")),
+                Box::new(BlockCommentParser::new("/*", "*/", true)),
+            ],
+        }
+    }
 }
 
 pub struct LangParser {
@@ -56,17 +80,29 @@ impl LangParser {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_filetypes(filetypes: HashMap<String, Lang>) -> Self {
         Self { filetypes }
     }
 
-    fn get_lang(&self, filename: &str) -> Result<Lang> {
+    pub fn parse(&self, filename: &str, content: &str) -> Result<Vec<Comment>> {
+        let lang = self.detect_lang(filename)?;
+        let parsers = lang.parsers();
+        let mut comments = vec![];
+        for parser in parsers.iter() {
+            comments.append(&mut parser.parse(content)?);
+        }
+        comments.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap());
+        Ok(comments)
+    }
+
+    fn detect_lang(&self, filename: &str) -> Result<Lang> {
         Path::new(filename)
             .extension()
             .and_then(OsStr::to_str)
             .map(|ext| self.filetypes.get(ext))
             .flatten()
-            .ok_or_else(|| SourcelinkError::UnknownLanguage(filename.to_owned()))
+            .ok_or_else(|| SourcelinkError::UnknownLanguage(filename.to_owned()).into())
             .copied()
     }
 }
@@ -75,21 +111,68 @@ impl LangParser {
 mod test {
     use super::*;
 
+    const EXAMPLE_RS: &str = include_str!("../../../test/example.rs");
+
     #[test]
-    fn test_language_detection() {
+    fn lang_parser_detect_lang() {
         let lp = LangParser::new();
-        assert_eq!(lp.get_lang("test.c"), Ok(Lang::CFamily));
-        assert_eq!(lp.get_lang("test.cpp"), Ok(Lang::CFamily));
-        assert_eq!(lp.get_lang("test.js"), Ok(Lang::JavaScript));
-        assert_eq!(lp.get_lang("test.ts"), Ok(Lang::JavaScript));
-        assert_eq!(lp.get_lang("test.rs"), Ok(Lang::Rust));
+        assert!(matches!(lp.detect_lang("test.c"), Ok(Lang::CFamily)));
+        assert!(matches!(lp.detect_lang("test.cpp"), Ok(Lang::CFamily)));
+        assert!(matches!(lp.detect_lang("test.js"), Ok(Lang::JavaScript)));
+        assert!(matches!(lp.detect_lang("test.ts"), Ok(Lang::JavaScript)));
+        assert!(matches!(lp.detect_lang("test.rs"), Ok(Lang::Rust)));
+        let test_bin = lp.detect_lang("test.bin");
+        assert!(test_bin.is_err());
         assert_eq!(
-            lp.get_lang("test.bin"),
-            Err(SourcelinkError::UnknownLanguage("test.bin".to_owned()))
+            test_bin.unwrap_err().to_string().as_str(),
+            "Unable to determine language of file test.bin",
+        );
+        let test = lp.detect_lang("test");
+        assert!(test.is_err());
+        assert_eq!(
+            test.unwrap_err().to_string().as_str(),
+            "Unable to determine language of file test",
+        );
+    }
+
+    #[test]
+    fn lang_parser_parse() {
+        let lp = LangParser::new();
+        let parsed = lp.parse("example.rs", EXAMPLE_RS);
+        assert!(parsed.is_ok());
+        let comments = parsed.unwrap();
+        assert_eq!(comments.len(), 4);
+        assert_eq!(
+            comments[0],
+            Comment {
+                content: " comment one".to_owned(),
+                start: 2,
+                end: 14,
+            }
         );
         assert_eq!(
-            lp.get_lang("test"),
-            Err(SourcelinkError::UnknownLanguage("test".to_owned()))
+            comments[1],
+            Comment {
+                content: " comment two ".to_owned(),
+                start: 26,
+                end: 39,
+            }
+        );
+        assert_eq!(
+            comments[2],
+            Comment {
+                content: " comment three".to_owned(),
+                start: 70,
+                end: 84,
+            }
+        );
+        assert_eq!(
+            comments[3],
+            Comment {
+                content: "\r\n/* comment four */\r\n".to_owned(),
+                start: 91,
+                end: 113,
+            }
         );
     }
 }
