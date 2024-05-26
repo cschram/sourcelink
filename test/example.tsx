@@ -1,7 +1,10 @@
-// comment one
-function main(/* comment two */) {
-    "string";
-    'string'; // comment three
+// https://github.com/cschram/sourcelink
+function main(/* lorem ipsum */) {
+    "/*string*/";
+    '/*string*/'; // https://www.google.com
+    `
+    // string
+    `;
 }
 /*
-/* comment four */
+/* lorem ipsum */

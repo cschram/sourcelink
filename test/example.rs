@@ -1,8 +1,9 @@
-// comment one
-fn main(/* comment two */) {
-    "string";
-    'string'; // comment three
+// https://github.com/cschram/sourcelink
+fn main(/* lorem ipsum */) {
+    "/*string*/";
+    '/*string*/'; // https://www.google.com
+    r#"/* lorem ipsum */"#;
 }
 /*
-/* comment four */
+/* lorem ipsum */
 */

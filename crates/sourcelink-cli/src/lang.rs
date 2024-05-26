@@ -7,6 +7,7 @@ pub enum Lang {
     C,
     Go,
     JavaScript,
+    Lua,
     Python,
     Rust,
 }
@@ -21,6 +22,7 @@ impl Lang {
             "c" | "cpp" | "h" | "hpp" => Ok(Self::C),
             "go" => Ok(Self::Go),
             "js" | "jsx" | "ts" | "tsx" => Ok(Self::JavaScript),
+            "lua" => Ok(Self::Lua),
             "py" => Ok(Self::Python),
             "rs" => Ok(Self::Rust),
             _ => Err(SourcelinkError::UnknownLanguage(filename.to_owned()).into()),
@@ -29,7 +31,11 @@ impl Lang {
 
     pub fn parse<'source>(&self, content: &'source str) -> Result<Vec<Comment<'source>>> {
         let parser: Box<dyn Parser> = match self {
-            Self::C | Self::Go | Self::JavaScript => Box::new(CParser),
+            Self::C => Box::new(CParser),
+            Self::Go | Self::JavaScript => Box::new(GoParser),
+            Self::Lua => Box::new(LuaParser),
+            Self::Python => Box::new(PythonParser),
+            Self::Rust => Box::new(RustParser),
             _ => unimplemented!(),
         };
         parser.parse(content)

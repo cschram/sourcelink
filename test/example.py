@@ -1,7 +1,8 @@
-# comment one
+# https://github.com/cschram/sourcelink
 def main():
     """
-    comment two
+    # https://www.google.com
     """
-    "string" # comment three
+    "string" # lorem ipsum
     'string'
+    f"#string"

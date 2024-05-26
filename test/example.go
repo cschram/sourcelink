@@ -1,8 +1,11 @@
-// comment one
+// https://github.com/cschram/sourcelink
 package main
-func main(/* comment two */) {
-	"string";
-	'c'; // comment three
+func main(/* lorem ipsum */) {
+	"/*string*/";
+	'c'; // https://www.google.com
+	`
+	// string
+	`;
 }
 /*
-/* comment four */
+/* lorem ipsum */

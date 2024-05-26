@@ -9,6 +9,8 @@ enum Token {
     DoubleQuote,
     #[token("'")]
     SingleQuote,
+    #[token("`")]
+    Backtick,
     #[token("//")]
     DoubleSlash,
     #[token("/*")]
@@ -28,9 +30,9 @@ enum ParseState {
 }
 
 #[derive(Clone, Debug)]
-pub struct CParser;
+pub struct GoParser;
 
-impl<'source> Parser<'source> for CParser {
+impl<'source> Parser<'source> for GoParser {
     fn parse(&self, content: &'source str) -> Result<Vec<Comment<'source>>> {
         let mut comments = vec![];
         let mut state = ParseState::Empty;
@@ -38,7 +40,7 @@ impl<'source> Parser<'source> for CParser {
         while let Some(result) = lex.next() {
             if let Ok(current_token) = result {
                 state = match current_token {
-                    Token::DoubleQuote | Token::SingleQuote => match &state {
+                    Token::DoubleQuote | Token::SingleQuote | Token::Backtick => match &state {
                         ParseState::Empty => ParseState::String(current_token.clone()),
                         ParseState::String(token) => {
                             if current_token == *token {
@@ -95,18 +97,21 @@ impl<'source> Parser<'source> for CParser {
 mod test {
     use super::*;
 
-    const EXAMPLE_C: &str = include_str!("../../../../test/example.c");
+    const EXAMPLE_GO: &str = include_str!("../../../../test/example.go");
 
     #[test]
     fn parse() {
-        let parser = CParser;
-        let result = parser.parse(EXAMPLE_C);
+        let parser = GoParser;
+        let result = parser.parse(EXAMPLE_GO);
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 4);
-        assert_eq!(comments[0].content(), " comment one\r");
-        assert_eq!(comments[1].content(), " comment two ");
-        assert_eq!(comments[2].content(), " comment three\r");
-        assert_eq!(comments[3].content(), "\r\n/* comment four ");
+        assert_eq!(
+            comments[0].content(),
+            " https://github.com/cschram/sourcelink\r"
+        );
+        assert_eq!(comments[1].content(), " lorem ipsum ");
+        assert_eq!(comments[2].content(), " https://www.google.com\r");
+        assert_eq!(comments[3].content(), "\r\n/* lorem ipsum ");
     }
 }

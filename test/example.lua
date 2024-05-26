@@ -1,5 +1,5 @@
--- comment one
-function main() -- comment two
+-- https://github.com/cschram/sourcelink
+function main() -- https://www.google.com
   "string";
-  'string'; -- comment -- three
+  'string'; -- lorem -- ipsum
 end

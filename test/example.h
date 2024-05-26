@@ -1,6 +1,6 @@
-// comment one
-void main(/* comment two */);
-"string";
-'c'; // comment three
+// https://github.com/cschram/sourcelink
+void main(/* lorem ipsum */);
+"/*string*/";
+'c'; // https://www.google.com
 /*
-/* comment fourr */
+/* lorem ipsum */

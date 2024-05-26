@@ -9,10 +9,8 @@ enum Token {
     DoubleQuote,
     #[token("'")]
     SingleQuote,
-    #[token("#")]
-    Hash,
-    #[token("\"\"\"")]
-    TripleQuote,
+    #[token("--")]
+    DoubleDash,
     #[token("\n")]
     NewLine,
 }
@@ -22,13 +20,12 @@ enum ParseState {
     Empty,
     String(Token),
     SingleLineComment(usize),
-    BlockComment(usize),
 }
 
 #[derive(Clone, Debug)]
-pub struct PyParser;
+pub struct LuaParser;
 
-impl<'source> Parser<'source> for PyParser {
+impl<'source> Parser<'source> for LuaParser {
     fn parse(&self, content: &'source str) -> Result<Vec<Comment<'source>>> {
         let mut comments = vec![];
         let mut state = ParseState::Empty;
@@ -47,22 +44,13 @@ impl<'source> Parser<'source> for PyParser {
                         }
                         _ => state,
                     },
-                    Token::Hash => {
+                    Token::DoubleDash => {
                         if matches!(state, ParseState::Empty) {
                             ParseState::SingleLineComment(lex.span().end)
                         } else {
                             state
                         }
                     }
-                    Token::TripleQuote => match state {
-                        ParseState::Empty => ParseState::BlockComment(lex.span().end),
-                        ParseState::BlockComment(start) => {
-                            let end = lex.span().start;
-                            comments.push(Comment::new(substr(content, start, end)?, start, end));
-                            ParseState::Empty
-                        }
-                        _ => state,
-                    },
                     Token::NewLine => {
                         if let ParseState::SingleLineComment(start) = state {
                             let end = lex.span().start;
@@ -86,17 +74,20 @@ impl<'source> Parser<'source> for PyParser {
 mod test {
     use super::*;
 
-    const EXAMPLE_PY: &str = include_str!("../../../../test/example.py");
+    const EXAMPLE_LUA: &str = include_str!("../../../../test/example.lua");
 
     #[test]
     fn parse() {
-        let parser = PyParser;
-        let result = parser.parse(EXAMPLE_PY);
+        let parser = LuaParser;
+        let result = parser.parse(EXAMPLE_LUA);
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 3);
-        assert_eq!(comments[0].content(), " comment one\r");
-        assert_eq!(comments[1].content(), "\r\n    comment two\r\n    ");
-        assert_eq!(comments[2].content(), " comment three\r");
+        assert_eq!(
+            comments[0].content(),
+            " https://github.com/cschram/sourcelink\r"
+        );
+        assert_eq!(comments[1].content(), " https://www.google.com\r");
+        assert_eq!(comments[2].content(), " lorem -- ipsum\r");
     }
 }
