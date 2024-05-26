@@ -1,56 +1,43 @@
-use logos::Logos;
-use anyhow::Result; 
-
-#[derive(Logos, Clone, PartialEq, Debug)]
-struct Token {
-    // Comment delimeters
-    #[token("//")]
-    DoubleSlash,
-    #[token("/*")]
-    SlashStar,
-    #[token("*/")]
-    StarSlash,
-    #[token("#")]
-    Hash,
-    #[token("--")]
-    DashDash,
-    #[token("\"\"\"")]
-    TripleQuote,
-
-    // String delimeters
-    #[token("\"")]
-    Quote,
-    #[token("'")]
-    SingleQuote,
-    #[token("`")]
-    Backtick,
-}
-
-#[derive(Debug)]
-enum ParserState {
-    None,
-    String {
-        token: Token,
-        start: usize,
-    },
-    Comment {
-        token: Token,
-        start: usize,
-    },
-    BlockComment {
-        token: Token,
-        start: usize,
-    },
-}
+use crate::error::*;
+use anyhow::Result;
 
 #[derive(Clone, Debug)]
-struct Comment {
-    content: String,
+pub struct Comment<'source> {
+    content: &'source str,
     start: usize,
     end: usize,
 }
 
-pub trait Parser {
-    fn parse(&self, content: &str) -> Result<Vec<Comment>>;
+impl<'source> Comment<'source> {
+    pub fn new(content: &'source str, start: usize, end: usize) -> Self {
+        Self {
+            content,
+            start,
+            end,
+        }
+    }
+
+    pub fn content(&self) -> &'source str {
+        &self.content
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.end
+    }
 }
 
+pub trait Parser<'source> {
+    fn parse(&self, content: &'source str) -> Result<Vec<Comment<'source>>>;
+}
+
+pub fn substr<'source>(s: &'source str, start: usize, end: usize) -> Result<&'source str> {
+    if end > s.len() {
+        Err(SourcelinkError::OutOfRange(end, 0, s.len()).into())
+    } else {
+        Ok(&s[start..end])
+    }
+}

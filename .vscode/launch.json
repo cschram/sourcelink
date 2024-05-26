@@ -1,0 +1,85 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'sourcelink-cli'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=sourcelink-cli",
+                    "--package=sourcelink-cli"
+                ],
+                "filter": {
+                    "name": "sourcelink-cli",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "full"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'sourcelink-cli'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=sourcelink-cli",
+                    "--package=sourcelink-cli"
+                ],
+                "filter": {
+                    "name": "sourcelink-cli",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'sourcelink-server'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=sourcelink-server",
+                    "--package=sourcelink-server"
+                ],
+                "filter": {
+                    "name": "sourcelink-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'sourcelink-server'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=sourcelink-server",
+                    "--package=sourcelink-server"
+                ],
+                "filter": {
+                    "name": "sourcelink-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -1,4 +1,5 @@
 -- comment one
 function main() -- comment two
-  -- comment -- three
+  "string";
+  'string'; -- comment -- three
 end

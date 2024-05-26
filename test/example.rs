@@ -1,6 +1,7 @@
 // comment one
 fn main(/* comment two */) {
-    println!('test'); // comment three
+    "string";
+    'string'; // comment three
 }
 /*
 /* comment four */

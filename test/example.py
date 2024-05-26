@@ -1,6 +1,7 @@
-# Comment one
+# comment one
 def main():
     """
-    Comment two
+    comment two
     """
-    pass
+    "string" # comment three
+    'string'
