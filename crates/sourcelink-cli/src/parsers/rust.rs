@@ -9,10 +9,12 @@ enum Token {
     DoubleQuote,
     #[token("'")]
     SingleQuote,
-    #[token("r#\"")]
+    #[token("r\"")]
     RawOpenQuote,
+    #[token("r#\"")]
+    RawHashOpenQuote,
     #[token("\"#")]
-    RawCloseQuote,
+    RawHashCloseQuote,
     #[token("//")]
     DoubleSlash,
     #[token("/*")]
@@ -28,7 +30,7 @@ enum ParseState {
     Empty,
     String(Token),
     SingleLineComment(usize),
-    BlockComment(usize),
+    BlockComment { start: usize, nest_level: usize },
 }
 
 #[derive(Clone, Debug)]
@@ -55,12 +57,19 @@ impl<'source> Parser<'source> for RustParser {
                     },
                     Token::RawOpenQuote => {
                         if matches!(state, ParseState::Empty) {
-                            ParseState::String(Token::RawCloseQuote)
+                            ParseState::String(Token::DoubleQuote)
                         } else {
                             state
                         }
                     }
-                    Token::RawCloseQuote => {
+                    Token::RawHashOpenQuote => {
+                        if matches!(state, ParseState::Empty) {
+                            ParseState::String(Token::RawHashCloseQuote)
+                        } else {
+                            state
+                        }
+                    }
+                    Token::RawHashCloseQuote => {
                         if let ParseState::String(token) = &state {
                             if current_token == *token {
                                 ParseState::Empty
@@ -78,18 +87,35 @@ impl<'source> Parser<'source> for RustParser {
                             state
                         }
                     }
-                    Token::SlashStar => {
-                        if matches!(state, ParseState::Empty) {
-                            ParseState::BlockComment(lex.span().end)
-                        } else {
-                            state
+                    Token::SlashStar => match state {
+                        ParseState::Empty => ParseState::BlockComment {
+                            start: lex.span().end,
+                            nest_level: 0,
+                        },
+                        ParseState::BlockComment { start, nest_level } => {
+                            ParseState::BlockComment {
+                                start,
+                                nest_level: nest_level + 1,
+                            }
                         }
-                    }
+                        _ => state,
+                    },
                     Token::StarSlash => {
-                        if let ParseState::BlockComment(start) = state {
-                            let end = lex.span().start;
-                            comments.push(Comment::new(substr(content, start, end)?, start, end));
-                            ParseState::Empty
+                        if let ParseState::BlockComment { start, nest_level } = state {
+                            if nest_level > 0 {
+                                ParseState::BlockComment {
+                                    start,
+                                    nest_level: nest_level - 1,
+                                }
+                            } else {
+                                let end = lex.span().start;
+                                comments.push(Comment::new(
+                                    substr(content, start, end)?,
+                                    start,
+                                    end,
+                                ));
+                                ParseState::Empty
+                            }
                         } else {
                             state
                         }
@@ -132,6 +158,9 @@ mod test {
         );
         assert_eq!(comments[1].content(), " lorem ipsum ");
         assert_eq!(comments[2].content(), " https://www.google.com\r");
-        assert_eq!(comments[3].content(), "\r\n/* lorem ipsum ");
+        assert_eq!(
+            comments[3].content(),
+            " /*\r\n/* lorem ipsum */ /* */\r\n*/ "
+        );
     }
 }
